@@ -1,0 +1,5 @@
+hession=com.common.serializer.myserializer.HessionSerializer
+protostuff=com.common.serializer.myserializer.ProtostuffSerializer
+kryo=com.common.serializer.myserializer.KryoSerializer
+json=com.common.serializer.myserializer.JsonSerializer
+object=com.common.serializer.myserializer.ObjectSerializer
