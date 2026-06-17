@@ -3,6 +3,7 @@ package com.crabapple.core.server.netty;
 
 import com.crabapple.core.server.provider.ServiceProvider;
 import com.crabapple.core.server.ratelimit.RateLimitProvider;
+import com.crabapple.core.trace.interceptor.ServerTraceInterceptor;
 import common.message.RpcRequest;
 import common.message.RpcResponse;
 import io.netty.channel.ChannelHandlerContext;
@@ -21,7 +22,9 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<RpcRequest> 
             System.out.println("rpcRequest为空");
             return;
         }
+        ServerTraceInterceptor.beforeInvoke();
         RpcResponse response=getResponse(rpcRequest);
+        ServerTraceInterceptor.afterInvoke(rpcRequest.getMethodname());
         channelHandlerContext.writeAndFlush(response);
         channelHandlerContext.close();
     }

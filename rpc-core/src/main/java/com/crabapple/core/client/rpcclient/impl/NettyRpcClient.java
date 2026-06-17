@@ -2,12 +2,14 @@ package com.crabapple.core.client.rpcclient.impl;
 
 
 
+import com.crabapple.core.client.netty.MDCChannelHandler;
 import com.crabapple.core.client.netty.NettyClientInitializer;
 import com.crabapple.core.client.rpcclient.RpcClient;
 import com.crabapple.core.client.servicecenter.ServiceCenter;
 import com.crabapple.core.client.servicecenter.impl.ZKServiceCenter;
 import common.message.RpcRequest;
 import common.message.RpcResponse;
+import common.trace.TraceContext;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -18,6 +20,7 @@ import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
+import java.util.Map;
 
 @Slf4j
 public class NettyRpcClient implements RpcClient {
@@ -43,10 +46,12 @@ public class NettyRpcClient implements RpcClient {
 
     @Override
     public RpcResponse sendRpcRequest(RpcRequest request) {
+        Map<String,String> traceContext= TraceContext.getCopy();
         try{
             InetSocketAddress addr=serviceCenter.serviceDicovery(request.getInterfacename());
             ChannelFuture channelFuture=bootstrap.connect(addr).sync();
             Channel channel=channelFuture.channel();
+            channel.attr(MDCChannelHandler.TRACE_CONTEXT_KEY).set(traceContext);
             channel.writeAndFlush(request);
             channel.closeFuture().sync();
             AttributeKey<RpcResponse> key=AttributeKey.valueOf("RPCResponse");

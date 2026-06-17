@@ -8,7 +8,9 @@ import com.crabapple.core.client.retry.GuavaRetry;
 import com.crabapple.core.client.rpcclient.RpcClient;
 import com.crabapple.core.client.rpcclient.impl.SimpleRpcClient;
 import com.crabapple.core.client.rpcclient.impl.NettyRpcClient;
+import com.crabapple.core.trace.interceptor.ClientTraceInterceptor;
 import common.message.RpcRequest;
+import common.message.RpcResponse;
 
 
 import java.lang.reflect.InvocationHandler;
@@ -34,7 +36,8 @@ public class ClientProxy implements InvocationHandler {
     }
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-
+        ClientTraceInterceptor.beforeInvoke();
+        RpcResponse response;
         RpcRequest request= RpcRequest.builder()
                 .interfacename(method.getDeclaringClass().getName())
                 .methodname(method.getName())
@@ -46,10 +49,19 @@ public class ClientProxy implements InvocationHandler {
             return null;
         }
         if(serviceCenter.checkRetry(request.getInterfacename())){
-            return new GuavaRetry().sendServiceWithRetry(request,rpcClient).getData();
+            response= new GuavaRetry().sendServiceWithRetry(request,rpcClient);
         }else{
-            return rpcClient.sendRpcRequest(request).getData();
+            response= rpcClient.sendRpcRequest(request);
         }
+        if(response!=null){
+            if(response.getCode()==200){
+                circuitBreaker.recordSuccess();
+            }else if(response.getCode()==500){
+                circuitBreaker.recordFailure();
+            }
+        }
+        ClientTraceInterceptor.afterInvoke(method.getName());
+        return response!=null?response.getData():null;
     }
 
     public <T> T getProxy(Class<T> clazz){

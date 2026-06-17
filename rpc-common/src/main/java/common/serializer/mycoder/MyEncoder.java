@@ -3,6 +3,7 @@ package common.serializer.mycoder;
 import common.message.MessageType;
 import common.message.RpcRequest;
 import common.serializer.myserializer.Serializer;
+import common.trace.TraceContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
@@ -15,6 +16,10 @@ public class MyEncoder extends MessageToByteEncoder {
     private Serializer serializer;
     @Override
     protected void encode(ChannelHandlerContext channelHandlerContext, Object o, ByteBuf byteBuf) throws Exception {
+        String tracemsg= TraceContext.getTraceId()+";"+TraceContext.getSpanId();
+        byte[] tracemsgBytes=tracemsg.getBytes();
+        byteBuf.writeInt(tracemsgBytes.length);
+        byteBuf.writeBytes(tracemsgBytes);
         log.info(o.getClass().getName());
         if(o instanceof RpcRequest){
             byteBuf.writeShort(MessageType.REQUEST.getType());
