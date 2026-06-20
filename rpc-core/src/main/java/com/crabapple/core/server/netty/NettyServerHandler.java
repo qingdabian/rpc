@@ -4,13 +4,15 @@ package com.crabapple.core.server.netty;
 import com.crabapple.core.server.provider.ServiceProvider;
 import com.crabapple.core.server.ratelimit.RateLimitProvider;
 import com.crabapple.core.trace.interceptor.ServerTraceInterceptor;
+import common.message.RequestType;
 import common.message.RpcRequest;
 import common.message.RpcResponse;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
-
+@Slf4j
 public class NettyServerHandler extends SimpleChannelInboundHandler<RpcRequest> {
     private ServiceProvider services;
     public NettyServerHandler(ServiceProvider services) {
@@ -20,6 +22,10 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<RpcRequest> 
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, RpcRequest rpcRequest) throws Exception {
         if(rpcRequest==null){
             System.out.println("rpcRequest为空");
+            return;
+        }
+        if(rpcRequest.getType()== RequestType.HEARTBEAT){
+            log.info("收到心跳包");
             return;
         }
         ServerTraceInterceptor.beforeInvoke();
