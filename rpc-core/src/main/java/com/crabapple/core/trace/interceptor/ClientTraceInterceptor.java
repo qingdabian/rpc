@@ -13,7 +13,7 @@ public class ClientTraceInterceptor {
         }
         String spanId=TraceIdGenerator.generateSpanId();
         TraceContext.setSpanId(spanId);
-        TraceContext.setParentSpanId(spanId);
+        TraceContext.setParentSpanId("");
 
         long startTime=System.currentTimeMillis();
         TraceContext.setStartTimestamp(String.valueOf(startTime));
@@ -23,7 +23,7 @@ public class ClientTraceInterceptor {
         long startTime=Long.valueOf(TraceContext.getStartTimestamp());
         long duration=endTime-startTime;
 
-        ZipkinReporter.reportSpan(TraceContext.getTraceId(),TraceContext.getSpanId(),"client"+serviceName, TraceContext.getParentSpanId(),serviceName,"client",startTime,duration);
+        ZipkinReporter.reportClientSpan(TraceContext.getTraceId(),TraceContext.getSpanId(),"client"+serviceName, TraceContext.getParentSpanId(),serviceName,"client",startTime,duration);
         TraceContext.clear();
     }
 }

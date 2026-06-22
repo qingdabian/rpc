@@ -51,6 +51,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<RpcRequest> 
         }
         Method method=null;
         try{
+
             method=service.getClass().getMethod(rpcRequest.getMethodname(),rpcRequest.getParamTypes());
             Object result=method.invoke(service,rpcRequest.getParams());
             return RpcResponse.success(result);

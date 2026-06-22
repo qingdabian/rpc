@@ -44,6 +44,6 @@ public class MyDecoder extends ByteToMessageDecoder {
         String tracemsg=new String(tracemsgBytes);
         String[] traceMsg=tracemsg.split(";");
         TraceContext.setTraceId(traceMsg[0]);
-        TraceContext.setSpanId(traceMsg[1]);
+        TraceContext.setParentSpanId(traceMsg[1]);
     }
 }

@@ -16,6 +16,8 @@ public class MyEncoder extends MessageToByteEncoder {
     private Serializer serializer;
     @Override
     protected void encode(ChannelHandlerContext channelHandlerContext, Object o, ByteBuf byteBuf) throws Exception {
+        System.out.println("当前的traceContext中的traceid为"+TraceContext.getTraceId());
+        System.out.println("当前的traceContext中的spanid为"+TraceContext.getSpanId());
         String tracemsg= TraceContext.getTraceId()+";"+TraceContext.getSpanId();
         byte[] tracemsgBytes=tracemsg.getBytes();
         byteBuf.writeInt(tracemsgBytes.length);

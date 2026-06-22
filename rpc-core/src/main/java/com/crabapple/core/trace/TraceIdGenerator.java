@@ -7,7 +7,7 @@ import java.util.UUID;
 public class TraceIdGenerator {
     private static final SnowflakeIdGenerator generator = new SnowflakeIdGenerator(0L);
     public static String generateTraceId() {
-        return Long.toHexString(generator.nextId());
+        return String.format("%016x", generator.nextId());
     }
     // 生成UUID作为traceId
     public static String generateTraceIdUUID(){
@@ -17,7 +17,7 @@ public class TraceIdGenerator {
         return uuidWithoutHyphen;
     }
     public static String generateSpanId(){
-        return String.valueOf(System.currentTimeMillis());
+        return String.format("%016x", generator.nextId());
     }
     // 生成雪花ID作为traceId
     static class SnowflakeIdGenerator{
