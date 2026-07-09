@@ -4,6 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/*
+管理令牌桶，不同的服务使用不同的令牌桶
+ */
 public class RateLimitProvider {
     private Map<String,RateLimit> rateLimitMap=new ConcurrentHashMap<>();
     public RateLimit getRateLimit(String key){

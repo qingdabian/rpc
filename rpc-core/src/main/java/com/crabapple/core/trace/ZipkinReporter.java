@@ -36,7 +36,7 @@ public class ZipkinReporter {
 //        }catch(Exception e){
 //            log.error("发送链路信息等待时发生异常:{ }",e);
 //        }
-        System.out.println("服务端当前上报的日志是:  "+span);
+//        System.out.println("服务端当前上报的日志是:  "+span);
         log.info("服务端当前上报的日志是:{}",traceId);
     }
     public static void reportClientSpan(String traceId,String spanId,String name,String parentId,String serviceName,String type,long startTime,long duration){
@@ -57,7 +57,7 @@ public class ZipkinReporter {
 //            log.error("发送链路信息等待时发生异常:{ }",e);
 //        }
         reporter.flush();
-        System.out.println("客户端端当前上报的日志是:  "+span);
+//        System.out.println("客户端端当前上报的日志是:  "+span);
         log.info("当前上报的日志是:{}",traceId);
     }
 
