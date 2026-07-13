@@ -16,6 +16,7 @@ import common.message.RpcResponse;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.UUID;
 
 
 public class ClientProxy implements InvocationHandler {
@@ -39,6 +40,7 @@ public class ClientProxy implements InvocationHandler {
         ClientTraceInterceptor.beforeInvoke();
         RpcResponse response;
         RpcRequest request= RpcRequest.builder()
+                .requestId(UUID.randomUUID().toString())
                 .interfacename(method.getDeclaringClass().getName())
                 .methodname(method.getName())
                 .params(args)

@@ -32,7 +32,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<RpcRequest> 
         RpcResponse response=getResponse(rpcRequest);
         ServerTraceInterceptor.afterInvoke(rpcRequest.getMethodname());
         channelHandlerContext.writeAndFlush(response);
-        channelHandlerContext.close();
+//        channelHandlerContext.close();
     }
     @Override
     public void exceptionCaught(ChannelHandlerContext channelHandlerContext, Throwable throwable) throws Exception {
@@ -47,17 +47,17 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<RpcRequest> 
         boolean isRateLimit=rateLimitProvider.getRateLimit(interfacename).getToken();
         if(!isRateLimit){
             System.out.println("限流");
-            return RpcResponse.error();
+            return RpcResponse.error(rpcRequest.getRequestId());
         }
         Method method=null;
         try{
 
             method=service.getClass().getMethod(rpcRequest.getMethodname(),rpcRequest.getParamTypes());
             Object result=method.invoke(service,rpcRequest.getParams());
-            return RpcResponse.success(result);
+            return RpcResponse.success(result, rpcRequest.getRequestId());
         }catch(Exception e){
             e.printStackTrace();
-            return RpcResponse.error();
+            return RpcResponse.error(rpcRequest.getRequestId());
         }
     }
 }

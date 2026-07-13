@@ -12,23 +12,36 @@ import common.message.RpcResponse;
 import common.trace.TraceContext;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 public class NettyRpcClient implements RpcClient {
-//    private String host;
-//    private int port;
     private static final Bootstrap bootstrap;
     public static final EventLoopGroup eventLoopGroup;
     private ServiceCenter serviceCenter;
+
+    /** 每个地址的连接池大小 */
+    private static final int POOL_SIZE = 32;
+    /** 地址 → Channel 数组 */
+    private static final ConcurrentHashMap<InetSocketAddress, Channel[]> channelPool
+            = new ConcurrentHashMap<>();
+    /** 地址 → 轮询计数器 */
+    private static final ConcurrentHashMap<InetSocketAddress, AtomicInteger> roundRobin
+            = new ConcurrentHashMap<>();
+    /** requestId → 等待响应的 Future */
+    public static final ConcurrentHashMap<String, CompletableFuture<RpcResponse>> pendingRequests
+            = new ConcurrentHashMap<>();
     public NettyRpcClient(){
         this.serviceCenter=new ZKServiceCenter();
     }
@@ -49,20 +62,69 @@ public class NettyRpcClient implements RpcClient {
         Map<String,String> traceContext= TraceContext.getCopy();
         try{
             InetSocketAddress addr=serviceCenter.serviceDicovery(request.getInterfacename());
-            ChannelFuture channelFuture=bootstrap.connect(addr).sync();
-            Channel channel=channelFuture.channel();
-            channel.attr(MDCChannelHandler.TRACE_CONTEXT_KEY).set(traceContext);
-            channel.writeAndFlush(request);
-            channel.closeFuture().sync();
-            AttributeKey<RpcResponse> key=AttributeKey.valueOf("RPCResponse");
-            RpcResponse response=channel.attr(key).get();
-            System.out.println(response);
-            return response;
 
-        }catch (InterruptedException e){
-            e.printStackTrace();
+            // 从多连接池中轮询选一个 Channel
+            Channel channel = selectChannel(addr);
+            channel.attr(MDCChannelHandler.TRACE_CONTEXT_KEY).set(traceContext);
+
+            // 确保有 requestId
+            if (request.getRequestId() == null) {
+                request.setRequestId(UUID.randomUUID().toString());
+            }
+            String requestId = request.getRequestId();
+
+            // 注册 Future，等待响应
+            CompletableFuture<RpcResponse> future = new CompletableFuture<>();
+            pendingRequests.put(requestId, future);
+
+            channel.writeAndFlush(request).sync();
+
+            try {
+                return future.get(5, TimeUnit.SECONDS);
+            } finally {
+                pendingRequests.remove(requestId);
+            }
+
+        }catch (Exception e){
+            log.error("sendRpcRequest error", e);
         }
         return null;
+    }
+
+    /** 从连接池中轮询选取 Channel，断线自动重连 */
+    private Channel selectChannel(InetSocketAddress addr) {
+        Channel[] channels = channelPool.computeIfAbsent(addr, k -> {
+            Channel[] arr = new Channel[POOL_SIZE];
+            for (int i = 0; i < POOL_SIZE; i++) {
+                try {
+                    arr[i] = bootstrap.connect(k).sync().channel();
+                } catch (Exception e) {
+                    throw new RuntimeException("创建连接失败: " + k, e);
+                }
+            }
+            return arr;
+        });
+
+        AtomicInteger counter = roundRobin.computeIfAbsent(addr,
+                k -> new AtomicInteger(0));
+        int index = counter.getAndIncrement() % POOL_SIZE;
+        if (index < 0) index += POOL_SIZE;
+
+        // 断线重连（双重检查）
+        Channel channel = channels[index];
+        if (!channel.isActive()) {
+            synchronized (channels) {
+                if (!channels[index].isActive()) {
+                    try {
+                        channels[index] = bootstrap.connect(addr).sync().channel();
+                    } catch (Exception e) {
+                        throw new RuntimeException("重连失败: " + addr, e);
+                    }
+                }
+            }
+            channel = channels[index];
+        }
+        return channel;
     }
 
     @Override

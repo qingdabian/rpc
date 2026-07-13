@@ -11,7 +11,7 @@ public class RateLimitProvider {
     private Map<String,RateLimit> rateLimitMap=new ConcurrentHashMap<>();
     public RateLimit getRateLimit(String key){
         if(!rateLimitMap.containsKey(key)){
-            RateLimit rateLimit=new TokenBucketRateLimitImpl(1000,100);
+            RateLimit rateLimit=new TokenBucketRateLimitImpl(1,100000);
             rateLimitMap.put(key,rateLimit);
             return rateLimit;
         }

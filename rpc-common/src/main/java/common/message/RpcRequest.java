@@ -12,6 +12,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RpcRequest implements Serializable {
+    private String requestId;
     private RequestType type=RequestType.NORMAL;
     private String interfacename;
     private String methodname;
