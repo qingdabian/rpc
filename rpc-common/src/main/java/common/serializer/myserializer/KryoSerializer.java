@@ -4,6 +4,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import common.exception.SerializeException;
+import common.message.RpcRequest;
+import common.message.RpcResponse;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -56,9 +58,12 @@ public class KryoSerializer implements Serializer {
     }
 
     private Class<?> getClassForMessageType(int messageType) {
-        if (messageType == 1) {
-            return null;  // 假设我们在此反序列化成 User 类
-        } else {
+        if (messageType == 0) {
+            return RpcRequest.class;  // 假设我们在此反序列化成 User 类
+        } else if(messageType == 1){
+            return RpcResponse.class;
+        }
+        else {
             throw new SerializeException("Unknown message type: " + messageType);
         }
     }
