@@ -21,7 +21,7 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
     @Override
     protected void initChannel(SocketChannel socketChannel) throws Exception {
         ChannelPipeline pipeline=socketChannel.pipeline();
-        pipeline.addLast(new IdleStateHandler(10L,20L,0L,TimeUnit.SECONDS));
+        pipeline.addLast(new IdleStateHandler(60L,0L,0L,TimeUnit.SECONDS));
         pipeline.addLast(new HeartbeatHandler());
         pipeline.addLast(new LengthFieldBasedFrameDecoder(65535,0,4,0,4));
         pipeline.addLast(new LengthFieldPrepender(4));

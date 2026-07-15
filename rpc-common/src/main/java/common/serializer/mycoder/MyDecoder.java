@@ -27,6 +27,7 @@ public class MyDecoder extends ByteToMessageDecoder {
             log.error("messageType is not request or response");
             return;
         }
+
         serializer=Serializer.getSerializer(serializerType);
         if(serializer==null){
             log.error("serializer is null");

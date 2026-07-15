@@ -15,8 +15,8 @@ public class HeartbeatHandler extends ChannelDuplexHandler {
                 IdleStateEvent idleStateEvent = (IdleStateEvent) evt;
                 IdleState idleState=idleStateEvent.state();
                 if(idleState==IdleState.WRITER_IDLE){
-                    log.info("超过10秒没有收到客户端心跳，关闭连接");
-                    ctx.writeAndFlush(RpcRequest.heartBeat());
+                    log.info("超过10秒没有发送客户端心跳，发送心跳");
+                    ctx.channel().writeAndFlush(RpcRequest.heartBeat());
                 }
             }else{
                 super.userEventTriggered(ctx, evt);
