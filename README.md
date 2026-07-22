@@ -114,4 +114,3 @@ System.out.println(user);
 | Guava Retrying | 2.0.0 | 失败重试 |
 | Kryo / Protostuff / Hessian | 4.0.2 / 1.7.4 / 4.0.66 | 序列化方案 |
 | Fastjson2 | 2.0.62 | JSON 序列化 |
-
